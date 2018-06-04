@@ -1,0 +1,57 @@
+var Sdk = window.Sdk || { __namespace: true };
+(function () {
+ //A global variable to store information about enabled business processes after they are retrieved asynchronously
+ this.enabledProcesses = [];
+
+ // A function to log messages while debugging only
+ this.writeToConsole = function (message) {
+  if (typeof console != 'undefined')
+  { console.log(message); }
+ };
+
+ //Code to run in the OnLoad event 
+ this.formOnLoad = function () {
+    	        var fieldName="casetypecode";
+	 	var fieldvalue = Xrm.Page.getAttribute(fieldName).getSelectedOption().text;
+		var activeProcess = Xrm.Page.data.process.getActiveProcess();
+		if((activeProcess.getName() =="RMA")||(fieldvalue !="Return"))
+				{	return; }
+	 var rmaProcessID = 0;
+  //Retrieve Enabled processes
+  Xrm.Page.data.process.getEnabledProcesses(function (processes) {
+   //Move processes to the global Sdk.enabledProcesses array;
+   for (var processId in processes) {
+    Sdk.enabledProcesses.push({ id: processId, name: processes[processId] })
+   }
+   Sdk.writeToConsole("Enabled business processes flows retrieved and added to Sdk.enabledProcesses array.");
+
+   //Write the values of the Sdk.enabledProcesses array to the console
+   if (Sdk.enabledProcesses.length < 0) {
+    Sdk.writeToConsole("There are no enabled business process flows for this entity.");
+   }
+   else {
+    Sdk.writeToConsole("These are the enabled business process flows for this entity:");
+    for (var i = 0; i < Sdk.enabledProcesses.length; i++) {
+     var enabledProcess = Sdk.enabledProcesses[i];
+						if(enabledProcess.name == "RMA")
+							{ 
+							rmaProcessID = enabledProcess.id;
+							}
+						 Sdk.writeToConsole("id: " + enabledProcess.id + " name: " + enabledProcess.name)
+    }
+   }
+
+   //Any code that depends on the Sdk.enabledProcesses array needs to be initiated here
+    	        var fieldName="casetypecode";
+	 	var fieldvalue = Xrm.Page.getAttribute(fieldName).getSelectedOption().text;
+		var activeProcess = Xrm.Page.data.process.getActiveProcess();
+
+		if((activeProcess.getName() !="RMA")&&(fieldvalue =="Return"))
+				{	  
+				Xrm.Page.data.process.setActiveProcess(rmaProcessID, true);	
+				}
+
+  });
+ };
+
+}).call(Sdk);
